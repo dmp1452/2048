@@ -7,7 +7,7 @@ from enum import Enum
 BLACK = (0,0,0)
 BLOCK_SIZE = 160
 pygame.init()
-font =pygame.font.Font(None,45)
+
 
 class Direction(Enum):
     RIGHT = 1
@@ -41,6 +41,7 @@ class Game:
             x,y,number = tile[0],tile[1],np.random.choice((2,4),p=(.9,.1))
             self.board[x][y] = number
 
+            font =pygame.font.Font(None,90)
             message_surface = font.render(str(number), True, (255,0,0))
             message_rect = message_surface.get_rect()
             message_rect.center=(y*BLOCK_SIZE+BLOCK_SIZE//2,x*BLOCK_SIZE+BLOCK_SIZE//2+50)
@@ -52,8 +53,14 @@ class Game:
         self.update_ui()
         pygame.time.delay(150)
         self.place()
+        reward =0
+        game_over = False
         if not self.check_loss():
-            print("Game lost")
+            game_over= True
+            return reward,game_over,self.score
+        
+        reward = 10
+        return reward, game_over, self.score
 
     def move(self,action):
         if action ==Direction.LEFT:
@@ -106,10 +113,12 @@ class Game:
 
     def update_ui(self):
         self.display.fill(BLACK)
+        font =pygame.font.Font(None,45)
         message_surface = font.render("Score: "+ str(self.score), True, (255,0,0))
         message_rect = message_surface.get_rect()
         message_rect.center=(320,25)
         self.display.blit(message_surface,message_rect)
+        font =pygame.font.Font(None,90)
         for x in range(4):
             for y in range(4):
                 number = self.board[x][y]
@@ -133,16 +142,12 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
                 game.next_step(Direction.LEFT)
-                #print("Left")
             if event.key == pygame.K_RIGHT:
                 game.next_step(Direction.RIGHT)
-                print("Right")
             if event.key == pygame.K_UP:
                 game.next_step(Direction.UP)
-                print("Up")
             if event.key == pygame.K_DOWN:
                 game.next_step(Direction.DOWN)
-                print("Down")
     pygame.display.update() 
         
         
