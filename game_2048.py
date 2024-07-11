@@ -13,7 +13,7 @@ class Direction(Enum):
     RIGHT = 1
     LEFT = 2
     UP = 3
-    DOWN = 4
+    DOWN = 0
 
 class Game:
     def __init__(self, w= 640,h = 690):
@@ -26,6 +26,7 @@ class Game:
     def reset(self):
         self.board = np.zeros((4,4))
         self.score = 0
+        self.last_score =0
         self.frame_iteration =0
         self.update_ui()
         self.place()
@@ -53,25 +54,24 @@ class Game:
         self.update_ui()
         pygame.time.delay(150)
         self.place()
-        reward =0
         game_over = False
         if not self.check_loss():
+            print("Game over")
             game_over= True
-            return reward,game_over,self.score
-        
-        reward = 10
-        return reward, game_over, self.score
+            return -10,game_over,self.score
+
+        return self.last_score, game_over, self.score
 
     def move(self,action):
-        if action ==Direction.LEFT:
+        if action ==Direction.LEFT.value:
             self.board=np.array([self.merge(row) for row in self.board])
 
-        elif action == Direction.RIGHT:
+        elif action == Direction.RIGHT.value:
             self.board =np.flip(self.board,axis =1)
             self.board=np.array([self.merge(row) for row in self.board])
             self.board =np.flip(self.board,axis =1)
 
-        elif action == Direction.UP:
+        elif action == Direction.UP.value:
             self.board = np.flip(self.board, axis =1)
             self.board = np.transpose(self.board)
             self.board=np.array([self.merge(row) for row in self.board])
@@ -79,6 +79,7 @@ class Game:
             self.board = np.flip(self.board, axis =1)
 
         else: #DOWN
+
             self.board = np.transpose(self.board)
             self.board = np.flip(self.board, axis =1)
             self.board=np.array([self.merge(row) for row in self.board])
@@ -87,11 +88,13 @@ class Game:
 
     
     def merge(self,row):
+        self.last_score=-1
         new_row = [num for num in row if num != 0]
         for i in range(len(new_row)-1):
             if new_row[i] ==new_row[i+1]:
                 new_row[i] *=2
                 self.score+=new_row[i]
+                self.last_score+=new_row[i]
                 new_row[i+1]=0
                 i+=1
         new_row = [num for num in new_row if num !=0]
@@ -107,7 +110,7 @@ class Game:
                 if self.board[x][y]==self.board[x+1][y] or self.board[x][y]==self.board[x][y+1]:
                     return True
         for x in range(3,0,-1):
-            if self.board[x][3]==self.board[x-1][y]or self.board[x][3]==self.board[x][2]:
+            if self.board[x][3]==self.board[x-1][3]or self.board[x][3]==self.board[x][2]:
                 return True
         return False
 
@@ -131,7 +134,7 @@ class Game:
                     self.display.blit(message_surface,message_rect)
         pygame.display.update()
 
-
+"""
 game = Game()
 while True:
     for event in pygame.event.get():
@@ -150,5 +153,5 @@ while True:
                 game.next_step(Direction.DOWN)
     pygame.display.update() 
         
-        
+        """
         

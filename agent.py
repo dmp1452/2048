@@ -2,12 +2,12 @@ import torch
 import random
 import numpy as np
 from collections import deque
-from 2048 import Game
+from game_2048 import Game
 from model import Linear_QNet, QTrainer
 from helper import plot
 MAX = 100000
 BATCH_SIZE = 1000
-LR = .001
+LR = .01
 
 class Agent:
     def __init__(self):
@@ -23,7 +23,7 @@ class Agent:
         return np.array(state, dtype=int)
     
     def remember(self,state,action,reward,next_state,done):
-        self.memory.append((self,state,action,reward,next_state,done))
+        self.memory.append((state,action,reward,next_state,done))
     
     def train_long_memory(self):
         if len(self.memory)>BATCH_SIZE:
@@ -47,7 +47,9 @@ class Agent:
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
             final_move[move]=1
-        return final_move
+        final_move = np.atleast_1d(final_move)
+        indices = np.where(final_move == 1)[0][0]
+        return indices
     
 def train():
     plot_scores =[]
