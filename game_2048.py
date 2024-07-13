@@ -1,7 +1,6 @@
 
 import pygame
 import numpy as np
-import sys
 from enum import Enum
 
 BLACK = (0,0,0)
@@ -10,6 +9,7 @@ pygame.init()
 
 
 class Direction(Enum):
+    #Enumeration for direction constants.
     RIGHT = 1
     LEFT = 2
     UP = 3
@@ -17,6 +17,9 @@ class Direction(Enum):
 
 class Game:
     def __init__(self, w= 640,h = 690):
+        """
+        Initialize the game with a window of width w and height h.
+        """
         self.w = w
         self.h = h
         self.display = pygame.display.set_mode((self.w,self.h))
@@ -24,6 +27,10 @@ class Game:
         self.reset()
 
     def reset(self):
+        """
+        Reset the game state, including the board, score, and frame iteration.
+        Place two initial tiles on the board.
+        """
         self.board = np.zeros((4,4))
         self.score = 0
         self.last_score =0
@@ -33,6 +40,9 @@ class Game:
         self.place()
     
     def place(self):
+        """
+        Place a new tile (2 or 4) in a random empty spot on the board.
+        """
         zeroes = np.where(self.board==0)
         if len(zeroes[0])>0:
             zeroes = zip(zeroes[0],zeroes[1])
@@ -49,20 +59,38 @@ class Game:
             self.display.blit(message_surface,message_rect)
     
     def next_step(self,action):
+        """
+        Execute the next step of the game based on the action provided.
+        """
         self.frame_iteration+=1
+        old_board = np.copy(self.board)
         self.move(action)
         self.update_ui()
-        pygame.time.delay(150)
+        #pygame.time.delay(150)
         self.place()
-        game_over = False
-        if not self.check_loss():
-            print("Game over")
-            game_over= True
-            return -10,game_over,self.score
 
-        return self.last_score, game_over, self.score
+        reward =0
+        game_over = False
+
+        if self.last_score>0:
+            reward +=self.last_score
+
+        if np.array_equal(old_board,self.board):
+            reward-=5
+        
+        free_space_reward = np.sum(self.board == 0)
+        reward += free_space_reward
+
+        if not self.check_loss():
+            game_over= True
+            reward -=20
+
+        return reward, game_over, self.score
 
     def move(self,action):
+        """
+        Move the tiles on the board in the specified direction.
+        """
         if action ==Direction.LEFT.value:
             self.board=np.array([self.merge(row) for row in self.board])
 
@@ -88,7 +116,10 @@ class Game:
 
     
     def merge(self,row):
-        self.last_score=-1
+        """
+        Merge tiles in a single row to the left.
+        """
+        self.last_score= 0
         new_row = [num for num in row if num != 0]
         for i in range(len(new_row)-1):
             if new_row[i] ==new_row[i+1]:
@@ -102,9 +133,15 @@ class Game:
 
 
     def check_loss(self):
+        """
+        Check if the game is lost (no moves available).
+        """
         return 0 in self.board.flat or self.can_combine()
     
     def can_combine(self):
+        """
+        Check if any tiles can be combined.
+        """
         for x in range(3):
             for y in range(3):
                 if self.board[x][y]==self.board[x+1][y] or self.board[x][y]==self.board[x][y+1]:
@@ -115,6 +152,9 @@ class Game:
         return False
 
     def update_ui(self):
+        """
+        Update the game's user interface.
+        """
         self.display.fill(BLACK)
         font =pygame.font.Font(None,45)
         message_surface = font.render("Score: "+ str(self.score), True, (255,0,0))
