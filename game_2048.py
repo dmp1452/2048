@@ -174,6 +174,8 @@ class Game:
                     self.display.blit(message_surface,message_rect)
         pygame.display.update()
 
+
+#Used to play manually
 """
 game = Game()
 while True:
